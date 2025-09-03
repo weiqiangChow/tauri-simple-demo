@@ -1,78 +1,28 @@
 <script setup lang="ts">
-import { useDark, useToggle } from '@vueuse/core'
 import { invoke } from '@tauri-apps/api/core'
-import { onMounted, watch } from 'vue'
-
-const isDark = useDark({
-  // 存储键名
-  storageKey: 'vueuse-color-scheme',
-  // 选择器，将 class 添加到 html 元素
-  selector: 'html',
-  // class 名称
-  attribute: 'class',
-  // 深色模式的 class 名
-  valueDark: 'dark',
-  // 浅色模式的 class 名
-  valueLight: 'light',
-})
-
-// 创建切换函数
-const toggleDark = useToggle(isDark)
-
-// 自定义切换函数，同时调用 Rust 后端
-const handleThemeToggle = async () => {
-  toggleDark()
-  
-  // 调用 Rust 后端设置窗口背景色
-  try {
-    await invoke('set_window_theme', { isDark: isDark.value })
-  } catch (error) {
-    console.error('设置窗口主题失败:', error)
-  }
-}
-
-// DevTools 控制函数
-const openDevTools = async () => {
-  try {
-    await invoke('open_devtools')
-  } catch (error) {
-    console.error('打开 DevTools 失败:', error)
-  }
-}
-
-const closeDevTools = async () => {
-  try {
-    await invoke('close_devtools')
-  } catch (error) {
-    console.error('关闭 DevTools 失败:', error)
-  }
-}
+import { onMounted } from 'vue'
 
 // 初始化时获取系统主题并同步到 Rust 后端
 onMounted(async () => {
   try {
-    // 获取系统主题
-    const systemIsDark = await invoke('get_system_theme') as boolean
-    
+    let isDark;
+    /**
+     * 获取系统主题的命令
+     * 对于 macOS，返回 true 表示深色模式，false 表示浅色模式
+     */
+    const systemIsDark = await invoke<boolean>('get_system_theme')
     // 如果没有用户偏好设置，使用系统主题
-    const storedTheme = localStorage.getItem('vueuse-color-scheme')
-    if (!storedTheme) {
-      isDark.value = systemIsDark
+    const theme = localStorage.getItem('system-theme')
+    if (theme) {
+      isDark = theme === 'dark'
+    } else {
+      isDark = systemIsDark
     }
-    
     // 同步当前主题到 Rust 后端
-    await invoke('set_window_theme', { isDark: isDark.value })
+    const res = await invoke<string>('set_window_theme', { isDark: isDark })
+    console.log('初始化主题结果:', res)
   } catch (error) {
     console.error('初始化主题失败:', error)
-  }
-})
-
-// 监听主题变化，同步到 Rust 后端
-watch(isDark, async (newValue) => {
-  try {
-    await invoke('set_window_theme', { isDark: newValue })
-  } catch (error) {
-    console.error('同步主题到后端失败:', error)
   }
 })
 </script>
@@ -84,12 +34,7 @@ watch(isDark, async (newValue) => {
       <router-link to="/">Home</router-link>
       <router-link to="/great">Great</router-link>
       <router-link to="/element-test">ElementTest</router-link>
-      <button @click="handleThemeToggle()" class="theme-toggle">
-        {{ isDark ? '🌙' : '☀️' }}
-      </button>
-      <button @click="openDevTools()" class="devtools-btn">
-        🔧 DevTools
-      </button>
+      <router-link to="/config-setting">ConfigSetting</router-link>
     </nav>
     <router-view />
   </main>
@@ -129,24 +74,6 @@ nav.navbar a.router-link-exact-active {
 
 .theme-toggle:hover {
   background: #396cd8;
-  transform: scale(1.05);
-}
-
-.devtools-btn {
-  font-size: 0.9em;
-  padding: 6px 10px;
-  margin-left: 8px;
-  border: 2px solid #28a745;
-  border-radius: 6px;
-  background: transparent;
-  color: #28a745;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.devtools-btn:hover {
-  background: #28a745;
-  color: white;
   transform: scale(1.05);
 }
 

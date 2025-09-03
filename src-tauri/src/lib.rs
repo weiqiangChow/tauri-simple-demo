@@ -6,19 +6,12 @@ use tauri::{WebviewUrl, WebviewWindowBuilder};
 fn setup_app(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let win_builder = WebviewWindowBuilder::new(app, "main", WebviewUrl::default())
         .title("Tauri Theme Demo")
-        .inner_size(800.0, 600.0);
-
-    // 在 debug 模式下启用 DevTools
-    #[cfg(debug_assertions)]
-    let win_builder = win_builder.devtools(true);
+        .inner_size(800.0, 600.0)
+        .devtools(true); // 始终启用 DevTools
 
     let window = win_builder
         .build()
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
-
-    // 在 debug 模式下自动打开 DevTools
-    #[cfg(debug_assertions)]
-    window.open_devtools();
 
     // 初始化窗口背景色（根据系统主题）
     init_window_background(&window);
