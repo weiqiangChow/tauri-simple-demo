@@ -23,7 +23,7 @@ pub fn get_macos_theme() -> bool {
             let result = String::from_utf8_lossy(&output.stdout);
             result.trim() == "Dark"
         }
-        Err(_) => false, // 如果命令失败，默认为浅色模式
+        Err(_) => false,
     }
 }
 

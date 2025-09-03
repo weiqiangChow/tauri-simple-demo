@@ -1,8 +1,10 @@
+#![allow(unexpected_cfgs)]
+
 // 设置 macOS 窗口背景色和标题栏
 #[cfg(target_os = "macos")]
 pub fn set_macos_window_background(window: &tauri::WebviewWindow, is_dark: bool) -> Result<(), String> {
     use cocoa::appkit::{NSColor, NSWindow};
-    use cocoa::base::{id, nil, YES};
+    use cocoa::base::{id, nil};
     use cocoa::foundation::NSString;
 
     if let Ok(ns_window) = window.ns_window() {
@@ -31,13 +33,11 @@ pub fn set_macos_window_background(window: &tauri::WebviewWindow, is_dark: bool)
             // 设置窗口背景色
             ns_window.setBackgroundColor_(bg_color);
 
-            // 设置标题栏样式以匹配主题
-            ns_window.setTitlebarAppearsTransparent_(YES);
-
-            // 通过设置窗口外观来影响标题栏
+            // 使用更好的标题栏设置方式，保持拖拽功能
             use objc::runtime::Class;
             use objc::{msg_send, sel, sel_impl};
 
+            // 设置窗口外观以影响标题栏颜色
             let appearance_class = Class::get("NSAppearance").unwrap();
             let appearance_name = if is_dark {
                 NSString::alloc(nil).init_str("NSAppearanceNameDarkAqua")
