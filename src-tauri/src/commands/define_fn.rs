@@ -13,11 +13,9 @@ pub fn get_platform() -> &'static str {
 #[cfg(target_os = "macos")]
 pub fn get_macos_theme() -> bool {
     use std::process::Command;
-
     let output = Command::new("defaults")
         .args(&["read", "-g", "AppleInterfaceStyle"])
         .output();
-
     match output {
         Ok(output) => {
             let result = String::from_utf8_lossy(&output.stdout);
